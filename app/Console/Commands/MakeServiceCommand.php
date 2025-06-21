@@ -50,7 +50,7 @@ class MakeServiceCommand extends Command
 
         class {$serviceClass}
         {
-            // Ajoutez ici votre logique métier
+            
         }
         PHP;
 
