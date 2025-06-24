@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('server__users', function (Blueprint $table) {
+        Schema::create('sites', function (Blueprint $table) {
             $table->id();
+            $table->string("name");
             $table->integer("user_id");
             $table->integer("server_id");
+            $table->string("domain");
+            $table->string("status");
+            $table->string("deployement_type");
             $table->timestamps();
         });
     }
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('server__users');
+        Schema::dropIfExists('sites');
     }
 };

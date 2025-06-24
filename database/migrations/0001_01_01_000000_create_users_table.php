@@ -16,7 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string("preferred_server_id")->nullable();
             $table->string('password');
+            $table->string("password_sftp");
             $table->rememberToken();
             $table->timestamps();
         });

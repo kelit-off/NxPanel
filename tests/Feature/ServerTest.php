@@ -20,7 +20,16 @@ class ServerTest extends TestCase
             "hostname" => env('TEST_SERVER_HOSTNAME'),
             "username" => env('TEST_SERVER_USERNAME'),
             "password" => env('TEST_SERVER_PASSWORD'),
-            "ip"       => env('TEST_SERVER_IP'),
+            "ip" => env('TEST_SERVER_IP'),
         ]);
+
+        $serverManager->create_website(
+            [
+                
+            ],
+            [
+
+            ],
+        )
     }
 }

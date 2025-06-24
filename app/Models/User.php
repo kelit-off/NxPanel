@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        "password_sftp",
+        "preferred_server_id"
     ];
 
     /**
@@ -44,5 +46,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function sites() {
+        return $this->hasMany(Site::class);
+    }
+
+    public function preferredServer() {
+        return $this->belongsTo(Server::class, 'preferred_server_id');
     }
 }

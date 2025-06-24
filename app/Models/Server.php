@@ -11,6 +11,10 @@ class Server extends Model
         "username",
         "password",
         "ip",
-        "website"
+        "status"
     ];
+
+    public function sites() {
+        return $this->hasMany(Site::class);
+    }
 }

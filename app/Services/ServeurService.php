@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Server;
+use App\Models\Site;
+use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use phpseclib3\Net\SFTP;
 use phpseclib3\Net\SSH2;
 
@@ -18,22 +21,28 @@ class ServeurService
         
     }
 
-    private function getServersList($param = null) {
+    public function getServersList($param = null) {
         return Server::all();
     }
 
-    private function getServerAvaialble($serverList) {
-        foreach($serverList as $server) {
-            $prometheus = new PrometheusService($server->ip);
+    private function getServer()
+    {
+        $servers = $this->getServersList();
 
+        if ($servers->isEmpty()) {
+            return null; // ou gérer l'erreur selon ton besoin
         }
+
+        // Prendre un serveur au hasard
+        return $servers->random()->id;
     }
+
 
     public function addServer(array $server) {
         Server::create([
             "hostname" => $server["hostname"],
             "username" => $server["username"],
-            "password" => $server["password"],
+            "password" => Crypt::encrypt($server["password"]),
             "ip" => $server["ip"],
             "port" => $server["port"] ?? 22,
             "status" => "install",
@@ -193,14 +202,10 @@ class ServeurService
         echo "✅ Services web installés.";
     }
 
-    public function createAccount($userInfo) {
-
-    }
-
     /**
      * Cette commande permet de crée un website sur un serveur selectionner
      * 
-     * @param array $userInfo Ensemble des infomation utilisateur comme username, mot de passe, status
+     * @param array $userId Id de l'utilisateur
      * 
      * @param array $websiteInfo Ensemble des information du premier site crée comme le nom du site internet
      * 
@@ -208,8 +213,67 @@ class ServeurService
      * Ensuite il créera les fichier de base pour le bon fonctionnement du site web comme le dossier public,
      * Il enregistre un site web simple
      */
-    public function create_website($userInfo, $websiteInfo) {
-        // 
+    public function create_website(int $userId, $websiteInfo) {
+        if(is_null($userId) || empty($userId)) {
+            return ["status" => "error", "messages" => "UserId invalide"];
+        }
+
+        $user = User::where("id", $userId);
+
+        if(!is_null($user->preferred_server_id)) {
+            $server = Server::where("ip", $user->preferred_server_id);
+        } else {
+            $server = $this->getServer();
+        }
+
+        $site = Site::create([
+            "name" => $websiteInfo['name'],
+            "user_id" => $user->id,
+            "server_id" => $server->id,
+            "domain" => $websiteInfo["domain"],
+            "status" => "install",
+            "deployement_type" => "mutualise"
+        ]);
+
+        $this->ssh = new SSH2($server->ip);
+        if (!$this->ssh->login($server->username, decrypt($server->password))) {
+            throw new \RuntimeException("SSH login failed for {$server['username']}@{$server['host']}");
+        }
+
+        $this->ssh->exec("sudo useradd -m -s /usr/sbin/nologin {$user->name}");
+        $password_sftp = decrypt($user->password_sftp);
+        $this->ssh->exec("echo {$user->name}:{$password_sftp} | sudo chpasswd");
+
+        $this->ssh->exec("sudo mkdir /home/{$user->name}/public");
+
+        $this->ssh->exec("sudo mkdir -p /home/{$user->name}/logs");
+        $this->ssh->exec("sudo chown www-data:www-data /home/{$user->name}/logs");
+        
+        $this->ssh->exec("sudo chown -R {$user->name}:{$user->name} /home/{$user->name}");
+
+        $indexContent = "<h1>Bienvenue sur le site de {$user->name}</h1>";
+        $this->ssh->exec("echo " . escapeshellarg($indexContent) . " | sudo tee /home/{$user->name}/public/index.html");
+        $this->ssh->exec("sudo chown {$user->name}:{$user->name} /home/{$user->name}/public/index.html");
+
+        $vhostConfig = <<<CONF
+            <VirtualHost *:80>
+                ServerName {$websiteInfo['domain']}
+                DocumentRoot /home/{$user->name}/public/
+
+                <Directory /home/{$user->name}/public/>
+                    Options Indexes FollowSymLinks
+                    AllowOverride All
+                    Require all granted
+                </Directory>
+
+                ErrorLog /home/{$user->name}/logs/error.log
+                CustomLog /home/{$user->name}/logs/access.log combined
+            </VirtualHost>
+        CONF;
+
+        $this->ssh->exec("echo " . escapeshellarg($vhostConfig) . " | sudo tee /etc/apache2/sites-available/{$user->domain}.conf");
+        $this->ssh->exec("sudo a2ensite {$user->domain}.conf");
+        $this->ssh->exec("sudo systemctl reload apache2");
     }
 
     public function __destruct()
