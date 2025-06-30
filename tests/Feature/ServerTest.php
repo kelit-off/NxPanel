@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Services\ServeurService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class ServerTest extends TestCase
@@ -22,14 +24,5 @@ class ServerTest extends TestCase
             "password" => env('TEST_SERVER_PASSWORD'),
             "ip" => env('TEST_SERVER_IP'),
         ]);
-
-        $serverManager->create_website(
-            [
-                
-            ],
-            [
-
-            ],
-        )
     }
 }

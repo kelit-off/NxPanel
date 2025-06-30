@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |---------------------------------------------------------------------------
+    | Priate APi token
+    |---------------------------------------------------------------------------
+    |
+    | Cette clé privet permet de protéger le programme face à la
+    | des récupérations de données sensible
+    |
+    */
+
+    "api_token" => env("APP_API_TOKEN"),
+
 ];

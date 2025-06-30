@@ -192,8 +192,14 @@ class ServeurService
         // Mise à jour avant installation
         $this->ssh->exec("sudo apt update");
 
-        // Installer Apache2, PHP, MySQL (sans interaction utilisateur)
-        $this->ssh->exec("sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 php mysql-server");
+        // Installer Apache2, MySQL (sans interaction utilisateur)
+        $this->ssh->exec("sudo DEBIAN_FRONTEND=noninteractive apt install -y apache2 mysql-server");
+
+        // Installation de PHP et configuration
+        $this->ssh->exec("");
+
+        // Configuration php
+        $this->ssh->exec("");
 
         // Activer et démarrer Apache2 (optionnel)
         $this->ssh->exec("sudo systemctl enable apache2");
@@ -213,17 +219,17 @@ class ServeurService
      * Ensuite il créera les fichier de base pour le bon fonctionnement du site web comme le dossier public,
      * Il enregistre un site web simple
      */
-    public function create_website(int $userId, $websiteInfo) {
+    public function create_website(int $userId, array $websiteInfo) {
         if(is_null($userId) || empty($userId)) {
             return ["status" => "error", "messages" => "UserId invalide"];
         }
 
-        $user = User::where("id", $userId);
+        $user = User::where("id", $userId)->firstOrFail();
 
         if(!is_null($user->preferred_server_id)) {
             $server = Server::where("ip", $user->preferred_server_id);
         } else {
-            $server = $this->getServer();
+            $server = Server::where("id",$this->getServer())->firstOrFail();
         }
 
         $site = Site::create([
