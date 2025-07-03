@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function create_user(Request $request) {
+    public function register(Request $request) {
         $validateData = $request->validate([
             "name" => "string",
             "email" => "string",
@@ -31,10 +32,17 @@ class AuthController extends Controller
 
     public function getUser(Request $request) {
         $validateData = $request->validate([
-            "email" => "string"
+            "email" => "required|string|email"
         ]);
 
-        return User::where("email", $validateData['email'])->firstOrFail();
+        try {
+            $user = User::where('email', $validateData['email'])->firstOrFail();
+            return response()->json(['id' => $user->id]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Utilisateur non trouvé pour cet email.',
+            ], 404);
+        }
     }
 
     private function generate_password($length = 12) {
