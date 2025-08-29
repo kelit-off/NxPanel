@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        "username_sftp",
         "password_sftp",
         "preferred_server_id"
     ];

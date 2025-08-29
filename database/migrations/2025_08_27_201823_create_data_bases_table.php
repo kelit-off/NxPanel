@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('servers', function (Blueprint $table) {
+        Schema::create('data_bases', function (Blueprint $table) {
             $table->id();
-            $table->string('hostname');
+            $table->integer("site_id");
+            $table->string('database_name');
             $table->string('username');
-            $table->string('ip');
-            $table->integer('port')->default(22);
             $table->string('password');
-            $table->string('status')->default('install');
+            $table->string('host')->default('127.0.0.1');
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('servers');
+        Schema::dropIfExists('data_bases');
     }
 };

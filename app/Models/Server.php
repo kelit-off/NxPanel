@@ -9,8 +9,8 @@ class Server extends Model
     protected $fillable = [
         "hostname",
         "username",
-        "password",
         "ip",
+        "password",
         "status"
     ];
 

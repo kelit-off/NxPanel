@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Server;
 use App\Services\ServeurService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class ServerController extends Controller
 {   
@@ -26,6 +28,30 @@ class ServerController extends Controller
 
         // Appel au service pour crée le site web sur le serveur
         $serverService = new ServeurService();
-        $serverService->create_website($user_id, $webSiteInfo);
+        $serverService->createWebsite($user_id, $webSiteInfo);
+    }
+
+    public function store(Request $request) {
+        $request->validate([
+            'hostname' => "required|string",
+            'username' => "required|string",
+            'password' => "required|string",
+            'ip' => "required|ip",
+            'port' => "required|integer"
+        ]);
+
+        $server = Server::create([
+            'hostname' => $request->hostname,
+            'username' => $request->username,
+            'password'  => Crypt::encryptString($request->password),
+            'ip'       => $request->ip,
+            'port'     => $request->port,
+        ]);
+
+        (new ServeurService)->addServer($server);
+
+        return response()->json([
+
+        ], 200);
     }
 }
